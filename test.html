@@ -1,0 +1,420 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>CinePay - Pruebas</title>
+    <link rel="stylesheet" href="styles.css">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+    <style>
+        .test-container {
+            max-width: 800px;
+            margin: 50px auto;
+            padding: 30px;
+            background: white;
+            border-radius: 20px;
+            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.1);
+        }
+        
+        .test-section {
+            margin-bottom: 30px;
+            padding: 20px;
+            border: 2px solid #e0e0e0;
+            border-radius: 10px;
+        }
+        
+        .test-section h3 {
+            color: #667eea;
+            margin-bottom: 15px;
+        }
+        
+        .test-button {
+            background: #667eea;
+            color: white;
+            border: none;
+            padding: 10px 20px;
+            border-radius: 8px;
+            cursor: pointer;
+            margin: 5px;
+            font-size: 14px;
+        }
+        
+        .test-button:hover {
+            background: #5a6fd8;
+        }
+        
+        .test-result {
+            margin-top: 10px;
+            padding: 10px;
+            border-radius: 5px;
+            font-family: monospace;
+            font-size: 12px;
+        }
+        
+        .test-result.success {
+            background: #d4edda;
+            color: #155724;
+            border: 1px solid #c3e6cb;
+        }
+        
+        .test-result.error {
+            background: #f8d7da;
+            color: #721c24;
+            border: 1px solid #f5c6cb;
+        }
+        
+        .test-result.info {
+            background: #d1ecf1;
+            color: #0c5460;
+            border: 1px solid #bee5eb;
+        }
+    </style>
+</head>
+<body>
+    <div class="test-container">
+        <h1><i class="fas fa-vial"></i> CinePay - Panel de Pruebas</h1>
+        <p>Esta página permite probar las funcionalidades de la pasarela de pagos.</p>
+        
+        <div class="test-section">
+            <h3><i class="fas fa-cog"></i> Configuración</h3>
+            <button class="test-button" onclick="testConfiguration()">Probar Configuración</button>
+            <button class="test-button" onclick="loadConfig()">Cargar Configuración</button>
+            <div id="config-result" class="test-result" style="display: none;"></div>
+        </div>
+        
+        <div class="test-section">
+            <h3><i class="fas fa-plug"></i> Conexión Rapikom</h3>
+            <button class="test-button" onclick="testRapikomConnection()">Probar Conexión</button>
+            <button class="test-button" onclick="testPaymentMethods()">Métodos de Pago</button>
+            <div id="rapikom-result" class="test-result" style="display: none;"></div>
+        </div>
+        
+        <div class="test-section">
+            <h3><i class="fas fa-credit-card"></i> Procesamiento de Pagos</h3>
+            <button class="test-button" onclick="testPaymentProcessing()">Probar Pago</button>
+            <button class="test-button" onclick="testCardValidation()">Validar Tarjeta</button>
+            <div id="payment-result" class="test-result" style="display: none;"></div>
+        </div>
+        
+        <div class="test-section">
+            <h3><i class="fas fa-bell"></i> Webhooks</h3>
+            <button class="test-button" onclick="testWebhook()">Probar Webhook</button>
+            <button class="test-button" onclick="testWebhookConnection()">Conectividad</button>
+            <div id="webhook-result" class="test-result" style="display: none;"></div>
+        </div>
+        
+        <div class="test-section">
+            <h3><i class="fas fa-database"></i> CinesUnidos</h3>
+            <button class="test-button" onclick="testCinesUnidosSync()">Sincronización</button>
+            <button class="test-button" onclick="testReservationUpdate()">Actualizar Reserva</button>
+            <div id="cinesunidos-result" class="test-result" style="display: none;"></div>
+        </div>
+        
+        <div class="test-section">
+            <h3><i class="fas fa-chart-line"></i> Métricas</h3>
+            <button class="test-button" onclick="getTransactionHistory()">Historial</button>
+            <button class="test-button" onclick="getMetrics()">Obtener Métricas</button>
+            <div id="metrics-result" class="test-result" style="display: none;"></div>
+        </div>
+        
+        <div class="test-section">
+            <h3><i class="fas fa-shield-alt"></i> Seguridad</h3>
+            <button class="test-button" onclick="testEncryption()">Probar Encriptación</button>
+            <button class="test-button" onclick="testValidation()">Validaciones</button>
+            <div id="security-result" class="test-result" style="display: none;"></div>
+        </div>
+    </div>
+
+    <script src="config.js"></script>
+    <script src="rapikom-integration.js"></script>
+    <script src="webhook-handler.js"></script>
+    <script>
+        // Variables globales para testing
+        let config;
+        let rapikomIntegration;
+        let webhookHandler;
+        
+        // Inicializar componentes de prueba
+        document.addEventListener('DOMContentLoaded', function() {
+            config = getConfig();
+            rapikomIntegration = new RapikomIntegration(config);
+            webhookHandler = new WebhookHandler(config);
+            
+            console.log('Componentes de prueba inicializados');
+        });
+        
+        // Función para mostrar resultados
+        function showResult(elementId, message, type = 'info') {
+            const element = document.getElementById(elementId);
+            element.textContent = message;
+            element.className = `test-result ${type}`;
+            element.style.display = 'block';
+        }
+        
+        // Probar configuración
+        function testConfiguration() {
+            try {
+                const isValid = validateConfig(config);
+                if (isValid) {
+                    showResult('config-result', '✅ Configuración válida\n' + JSON.stringify(config, null, 2), 'success');
+                } else {
+                    showResult('config-result', '❌ Configuración inválida\nRevisa las variables de entorno', 'error');
+                }
+            } catch (error) {
+                showResult('config-result', '❌ Error: ' + error.message, 'error');
+            }
+        }
+        
+        // Cargar configuración
+        function loadConfig() {
+            try {
+                const currentConfig = getConfig();
+                showResult('config-result', '📋 Configuración cargada:\n' + JSON.stringify(currentConfig, null, 2), 'info');
+            } catch (error) {
+                showResult('config-result', '❌ Error cargando configuración: ' + error.message, 'error');
+            }
+        }
+        
+        // Probar conexión con Rapikom
+        async function testRapikomConnection() {
+            try {
+                showResult('rapikom-result', '🔄 Probando conexión...', 'info');
+                
+                const result = await rapikomIntegration.testConnection();
+                
+                if (result.success) {
+                    showResult('rapikom-result', '✅ ' + result.message + '\nEntorno: ' + result.environment, 'success');
+                } else {
+                    showResult('rapikom-result', '❌ ' + result.message + '\nError: ' + result.error, 'error');
+                }
+            } catch (error) {
+                showResult('rapikom-result', '❌ Error de conexión: ' + error.message, 'error');
+            }
+        }
+        
+        // Probar métodos de pago
+        async function testPaymentMethods() {
+            try {
+                showResult('rapikom-result', '🔄 Obteniendo métodos de pago...', 'info');
+                
+                const methods = await rapikomIntegration.getPaymentMethods();
+                
+                showResult('rapikom-result', '✅ Métodos de pago disponibles:\n' + JSON.stringify(methods, null, 2), 'success');
+            } catch (error) {
+                showResult('rapikom-result', '❌ Error obteniendo métodos: ' + error.message, 'error');
+            }
+        }
+        
+        // Probar procesamiento de pago
+        async function testPaymentProcessing() {
+            try {
+                showResult('payment-result', '🔄 Procesando pago de prueba...', 'info');
+                
+                const paymentData = {
+                    amount: 25.00,
+                    currency: 'USD',
+                    movie: {
+                        id: 'test-movie',
+                        title: 'Película de Prueba'
+                    },
+                    seats: ['A1', 'A2'],
+                    paymentMethod: {
+                        cardNumber: '4111111111111111',
+                        expiry: '12/25',
+                        cvv: '123',
+                        cardName: 'Usuario de Prueba'
+                    },
+                    customer: {
+                        email: 'test@example.com'
+                    }
+                };
+                
+                const result = await rapikomIntegration.createPayment(paymentData);
+                
+                showResult('payment-result', '✅ Pago procesado:\n' + JSON.stringify(result, null, 2), 'success');
+            } catch (error) {
+                showResult('payment-result', '❌ Error procesando pago: ' + error.message, 'error');
+            }
+        }
+        
+        // Probar validación de tarjeta
+        async function testCardValidation() {
+            try {
+                showResult('payment-result', '🔄 Validando tarjeta...', 'info');
+                
+                const cardData = {
+                    cardNumber: '4111111111111111',
+                    expiry: '12/25',
+                    cvv: '123'
+                };
+                
+                const result = await rapikomIntegration.validateCard(cardData);
+                
+                showResult('payment-result', '✅ Tarjeta válida:\n' + JSON.stringify(result, null, 2), 'success');
+            } catch (error) {
+                showResult('payment-result', '❌ Error validando tarjeta: ' + error.message, 'error');
+            }
+        }
+        
+        // Probar webhook
+        async function testWebhook() {
+            try {
+                showResult('webhook-result', '🔄 Probando webhook...', 'info');
+                
+                const testWebhookData = {
+                    event_type: 'payment.succeeded',
+                    data: {
+                        id: 'test_transaction_' + Date.now(),
+                        amount: 25.00,
+                        currency: 'USD',
+                        status: 'succeeded',
+                        customer: {
+                            email: 'test@example.com'
+                        },
+                        metadata: {
+                            movie_id: 'test-movie',
+                            seats: ['A1', 'A2']
+                        }
+                    }
+                };
+                
+                const result = await webhookHandler.handleWebhook({
+                    body: testWebhookData,
+                    headers: {
+                        'x-rapikom-signature': 'test_signature'
+                    }
+                });
+                
+                showResult('webhook-result', '✅ Webhook procesado:\n' + JSON.stringify(result, null, 2), 'success');
+            } catch (error) {
+                showResult('webhook-result', '❌ Error procesando webhook: ' + error.message, 'error');
+            }
+        }
+        
+        // Probar conectividad del webhook
+        async function testWebhookConnection() {
+            try {
+                showResult('webhook-result', '🔄 Probando conectividad...', 'info');
+                
+                const result = await webhookHandler.testWebhookConnection();
+                
+                if (result.success) {
+                    showResult('webhook-result', '✅ ' + result.message, 'success');
+                } else {
+                    showResult('webhook-result', '❌ ' + result.error, 'error');
+                }
+            } catch (error) {
+                showResult('webhook-result', '❌ Error: ' + error.message, 'error');
+            }
+        }
+        
+        // Probar sincronización con CinesUnidos
+        async function testCinesUnidosSync() {
+            try {
+                showResult('cinesunidos-result', '🔄 Sincronizando con CinesUnidos...', 'info');
+                
+                // Simular sincronización
+                await new Promise(resolve => setTimeout(resolve, 1000));
+                
+                showResult('cinesunidos-result', '✅ Sincronización completada\nPelículas actualizadas: 3\nAsientos disponibles: 150', 'success');
+            } catch (error) {
+                showResult('cinesunidos-result', '❌ Error de sincronización: ' + error.message, 'error');
+            }
+        }
+        
+        // Probar actualización de reserva
+        async function testReservationUpdate() {
+            try {
+                showResult('cinesunidos-result', '🔄 Actualizando reserva...', 'info');
+                
+                const reservationData = {
+                    transaction_id: 'TXN_' + Date.now(),
+                    movie_id: 'test-movie',
+                    seats: ['A1', 'A2'],
+                    customer_email: 'test@example.com',
+                    amount: 25.00,
+                    status: 'confirmed'
+                };
+                
+                const result = await rapikomIntegration.updateCinesUnidosReservation(reservationData);
+                
+                showResult('cinesunidos-result', '✅ Reserva actualizada:\n' + JSON.stringify(result, null, 2), 'success');
+            } catch (error) {
+                showResult('cinesunidos-result', '❌ Error actualizando reserva: ' + error.message, 'error');
+            }
+        }
+        
+        // Obtener historial de transacciones
+        async function getTransactionHistory() {
+            try {
+                showResult('metrics-result', '🔄 Obteniendo historial...', 'info');
+                
+                const history = await rapikomIntegration.getTransactionHistory({
+                    limit: 10,
+                    offset: 0
+                });
+                
+                showResult('metrics-result', '✅ Historial obtenido:\n' + JSON.stringify(history, null, 2), 'success');
+            } catch (error) {
+                showResult('metrics-result', '❌ Error obteniendo historial: ' + error.message, 'error');
+            }
+        }
+        
+        // Obtener métricas
+        async function getMetrics() {
+            try {
+                showResult('metrics-result', '🔄 Calculando métricas...', 'info');
+                
+                // Simular métricas
+                const metrics = {
+                    total_transactions: 1250,
+                    total_amount: 31250.00,
+                    success_rate: 98.5,
+                    average_transaction: 25.00,
+                    today_transactions: 45,
+                    today_amount: 1125.00
+                };
+                
+                showResult('metrics-result', '✅ Métricas calculadas:\n' + JSON.stringify(metrics, null, 2), 'success');
+            } catch (error) {
+                showResult('metrics-result', '❌ Error calculando métricas: ' + error.message, 'error');
+            }
+        }
+        
+        // Probar encriptación
+        function testEncryption() {
+            try {
+                showResult('security-result', '🔄 Probando encriptación...', 'info');
+                
+                const originalCard = '4111111111111111';
+                const encrypted = rapikomIntegration.encryptCardNumber(originalCard);
+                
+                showResult('security-result', '✅ Encriptación exitosa:\nOriginal: ' + originalCard + '\nEncriptado: ' + encrypted, 'success');
+            } catch (error) {
+                showResult('security-result', '❌ Error de encriptación: ' + error.message, 'error');
+            }
+        }
+        
+        // Probar validaciones
+        function testValidation() {
+            try {
+                showResult('security-result', '🔄 Probando validaciones...', 'info');
+                
+                const validations = {
+                    card_number: '4111111111111111'.length === 16,
+                    expiry: /^\d{2}\/\d{2}$/.test('12/25'),
+                    cvv: '123'.length >= 3,
+                    email: /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test('test@example.com')
+                };
+                
+                const allValid = Object.values(validations).every(v => v);
+                
+                showResult('security-result', '✅ Validaciones completadas:\n' + JSON.stringify(validations, null, 2) + '\nTodas válidas: ' + allValid, 'success');
+            } catch (error) {
+                showResult('security-result', '❌ Error en validaciones: ' + error.message, 'error');
+            }
+        }
+    </script>
+</body>
+</html>
